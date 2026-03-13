@@ -1,0 +1,151 @@
+---
+title: "Stat 404 Project"
+author: "Philip Loewen, Kratika Rathi"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(MASS)
+```
+
+## Data Cleaning
+
+```{r}
+clean <- read.csv(
+  "~/Desktop/school/UBC/STAT 404/project/experiment_data_clean.csv")
+  #"~/Downloads/Experiment Schedule - Feuille 3.csv")
+
+
+clean <- clean[,-c(1,7)]
+clean$Location <- as.factor(clean$Location)
+clean$Device <- as.factor(clean$Device)
+clean$Time <- as.factor(clean$Time)
+clean$Day <- as.factor(clean$Day)
+head(clean)
+```
+
+## Data Analysis
+
+```{r}
+boxcox(Speed ~ .^3, data = clean, 
+       lambda = seq(0, 2.5, len = 21), ylab = "Log likelihood")
+```
+Since $\lambda = 1$ is in the $95\%$ confidence interval, this plot suggests that no transformation is necessary.
+
+```{r}
+aov <- lm(Speed ~ .^3, data = clean)
+anova(aov)
+```
+```{r}
+summary(aov)
+```
+
+
+```{r}
+#setting up contrasts
+
+MacbookVsOthers <- c(0.5,0.5,-1)
+iPhoneVsiPad <- c(1,-1,0)
+FridayVsOthers <- c(-1,0.5,0.5)
+WednesdayVsThursday <- c(0,1,-1)
+
+cat("MacbookVsOthers:       ",MacbookVsOthers,"\n")
+cat("iPhoneVsiPad:          ",iPhoneVsiPad,"\n")
+cat("FridayVsOthers:        ",FridayVsOthers,"\n")
+cat("WednesdayVsThursday:   ",WednesdayVsThursday,"\n")
+```
+```{r}
+contrasts(clean$Device) <- cbind(MacbookVsOthers, iPhoneVsiPad)
+contrasts(clean$Day) <- cbind(FridayVsOthers, WednesdayVsThursday)
+contrast.aov <- aov(Speed ~ .^3, data = clean)
+summary(contrast.aov, split = list(
+                                   Device = list(MacbookVsOthers = 1,
+                                                   iPhoneVsiPad = 2),
+                                   Day = list(FridayVsOthers = 1,
+                                                   WednesdayVsThursday = 2)))
+```
+
+```{r}
+model.coef <- coef(summary.lm(contrast.aov))
+model.coef
+```
+
+
+```{r}
+plot(aov, which = c(2))
+```
+
+```{r}
+plot(aov, which = c(1))
+```
+
+
+```{r}
+interaction.plot(clean$Location, clean$Device, clean$Speed)
+interaction.plot(clean$Time, clean$Day, clean$Speed)
+```
+
+```{r}
+
+device_means <- clean %>%
+  group_by(Device) %>%
+  summarise(mean = mean(Speed))
+
+time_means <- clean %>%
+  group_by(Time) %>%
+  summarise(mean = mean(Speed))
+
+location_means <- clean %>%
+  group_by(Location) %>%
+  summarise(mean = mean(Speed))
+
+day_means <- clean %>%
+  group_by(Day) %>%
+  summarise(mean = mean(Speed))
+
+device_means
+time_means
+location_means
+day_means
+```
+
+```{r}
+time_day_effects <- lapply(c("Morning", "Afternoon", "Evening"),
+                      function (x) {
+                        clean %>%
+                          filter(Time == x) %>%
+                          group_by(Day) %>%
+                          summarise(mean = mean(Speed))
+                      })
+
+td_effects <- left_join(time_day_effects[[1]],
+                        time_day_effects[[2]], by = "Day") %>%
+  left_join(time_day_effects[[3]], by = "Day")
+
+colnames(td_effects) <- c("Day", "Morning", "Afternoon", "Evening")
+
+td_effects
+```
+
+```{r}
+loc_dev <- lapply(c("Library", "Res", "Nest"),
+                  function (x) {
+                    clean %>%
+                      filter(Location == x) %>%
+                      group_by(Device) %>%
+                      summarise(mean = mean(Speed))
+                  })
+
+ld_effects <- left_join(loc_dev[[1]],
+                        loc_dev[[2]], by = "Device") %>%
+  left_join(loc_dev[[3]], by = "Device")
+
+colnames(ld_effects) <- c("Device", "Library", "Res", "Nest")
+
+ld_effects
+```

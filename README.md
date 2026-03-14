@@ -19,7 +19,9 @@ affecting speed at a 1% significance level.
 
 The MacBook consistently outperformed other devices, and we are 95% confident that switching to a MacBook from an iPad or iPhone 
 increases upload speeds by an average of 29.5 Mbps. Performance also varied by location synergy, as the MacBook works best in the Nest, while the 
-iPhone and iPad see higher speeds in the Library or Residence. Regarding timing, the results contradicted initial expectations that Friday would be the fastest day. 
+iPhone and iPad see higher speeds in the Library or Residence. 
+
+Regarding timing, the results contradicted initial expectations that Friday would be the fastest day. 
 Instead, Wednesday was the best performing day, while Friday recorded the slowest overall speeds. For the Time factor, a large difference exists between the Morning and the rest of the day, 
 but there is very little difference between Afternoon and Evening.
 
